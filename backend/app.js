@@ -4,8 +4,8 @@ let path = require('path');
 let logger = require('morgan');
 let cors = require('cors');
 
-let usersRouter = require('../javascript_note_api/app/routes/users.js');
-let notesRouter = require('../javascript_note_api/app/routes/notes.js');
+let usersRouter = require('./app/routes/users.js');
+let notesRouter = require('./app/routes/notes.js');
 
 var app = express();
 

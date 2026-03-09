@@ -14,9 +14,14 @@ const UsersModel = require('../model/users.js');
 // Get all users
 router.get('/', async (req, res) => {
   try {
+     console.log('Tentando conectar ao banco...');
     const users = await prisma.users.findMany();
+        console.log('Usuários encontrados:', users);
     res.json(users);
   } catch (error) {
+     console.error('ERRO COMPLETO:', error);
+    console.error('Mensagem:', error.message);
+    console.error('Stack:', error.stack);
     res.status(500).json({ error: 'Error getting users' });
   }
 });
