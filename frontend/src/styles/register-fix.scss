@@ -1,0 +1,27 @@
+.register-screen {
+  * {
+    pointer-events: auto !important;
+  }
+
+  input {
+    cursor: text !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 999 !important;
+    background: white !important;
+  }
+
+  .input {
+    pointer-events: auto !important;
+    z-index: 999 !important;
+  }
+
+  .control {
+    pointer-events: auto !important;
+    position: static !important;
+  }
+
+  .field {
+    pointer-events: auto !important;
+  }
+}
