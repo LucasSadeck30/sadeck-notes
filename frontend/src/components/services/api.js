@@ -1,6 +1,10 @@
 import React, { Fragment } from "react";
 import axios from "axios";
 
-const Api = axios.create({baseURL: "http://localhost:3001"});
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-export default Api
+const api = axios.create({
+  baseURL: API_URL
+});
+
+export default api;

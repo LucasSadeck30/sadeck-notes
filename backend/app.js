@@ -2,7 +2,15 @@ let express = require('express');
 let path = require('path');
 
 let logger = require('morgan');
-let cors = require('cors');
+// DEPOIS
+app.use(cors({
+  origin: [
+    'http://localhost:3000', // desenvolvimento
+    'https://sadeck-notes.vercel.app', // produção (substitua pela sua URL)
+    'https://sadeck-notes-*.vercel.app' // previews
+  ],
+  credentials: true
+}))
 
 let usersRouter = require('./app/routes/users.js');
 let notesRouter = require('./app/routes/notes.js');
