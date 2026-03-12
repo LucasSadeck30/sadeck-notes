@@ -11,6 +11,8 @@ static async CreateUser(req,res){
 
   try {
     console.log("teste");
+    console.log(`O valor que vem do req.body É ${req.body.name}`);
+    
     
   const transformar_para_hash_password = await bcrypt.hash(req.body.password, 10 )
  console.log("teste do hash: ",transformar_para_hash_password);
@@ -27,6 +29,8 @@ static async CreateUser(req,res){
 
       },
     });
+    console.log(`O valor do novo usuário é ${newUser}`);
+    
     res.status(201).json(newUser);
   } catch (error) {
     res.status(500).json({ error: 'Error creating user' });

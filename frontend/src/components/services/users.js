@@ -83,9 +83,17 @@ const UsersService = {
       return true
   }
 
+},
+// criação do service para quando o usuário perde a senha
+lostPassword: async(params) => await Api.post("/users/lostPassword", params),
+  
+   
+   
 }
 
 
-};
+
+
+
 
 export default UsersService;

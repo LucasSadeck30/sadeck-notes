@@ -3,11 +3,13 @@ var router = express.Router();
 const prisma = require('../config/database.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 require('dotenv').config()
 const WithAuth = require('../middlewares/auth.js');
 const secret = process.env.JWT_TOKEN
 
 const UsersModel = require('../model/users.js');
+const EmailService = require('../services/emailService.js');
 
 
 
@@ -67,12 +69,144 @@ router.post('/login', async (req, res) => {
     console.log({ error: "User password or email is incorrect" });
   }
 
+});
 
 
 
+// Criação da rota lostPassword para trabalhar com o 
+router.post('/lostPassword', async (req, res) => {
 
+  // vou precisar fazer uma verificação entre o password do banco de dados e o que o usuário manda na requisição
+  const { email } = req.body
+
+  console.log(`📧 Solicitação de reset para: ${email}`);
+  // acha o usuário no banco através do email
+
+  try {
+
+    const user = await prisma.users.findUnique({
+      where: {
+        email: email,
+      },
+    });
+
+
+    console.log('👤 Usuário encontrado?', user ? 'SIM' : 'NÃO')
+
+    if (!user) {
+       console.log('❌ Usuário não encontrado');
+      return res.status(200).json({ 
+        message: "Se o email existir, você receberá instruções de recuperação" 
+      });
+    }
+
+    console.log('✅ Usuário existe! ID:', user.id);
+
+     // 2. Gerar token único de reset
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 3600000); // 1 hora
+
+
+
+    console.log('Token gerado:', resetToken.substring(0, 10) + '...');
+    // 3. Salvar token na tabela password_reset_tokens
+    await prisma.password_reset_tokens.create({
+      data: {
+        user_id: user.id,
+        token: resetToken,
+        expires_at: expiresAt,
+        used: false
+      }
+    });
+
+
+
+    // 4. Enviar email
+    const emailResult = await EmailService.sendPasswordReset(email, resetToken);
+
+    if (!emailResult.success) {
+      return res.status(500).json({ error: "Erro ao enviar email" });
+    }
+
+    console.log(`Email de reset enviado para ${email}`);
+    
+    return res.status(200).json({ 
+      message: "Se o email existir, você receberá instruções de recuperação" 
+    });
+
+   
+
+
+
+  } catch (error) {
+       console.error('💥 ERRO COMPLETO:', error);
+    console.error('📛 Nome do erro:', error.name);
+    console.error('📝 Mensagem:', error.message);
+    console.error('📍 Stack:', error.stack);
+    return res.status(500).json({ error: "Erro no servidor" });
+  }
 
 });
+
+
+router.post('/resetPassword', async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    // 1. Buscar token no banco
+    const resetToken = await prisma.password_reset_tokens.findUnique({
+      where: { token: token },
+      include: { users: true }
+    });
+
+    // 2. Validar token
+    if (!resetToken) {
+      return res.status(400).json({ error: "Token inválido" });
+    }
+
+    if (resetToken.used) {
+      return res.status(400).json({ error: "Token já foi usado" });
+    }
+
+    if (new Date() > resetToken.expires_at) {
+      return res.status(400).json({ error: "Token expirado" });
+    }
+
+    // 3. Hash da nova senha
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 4. Atualizar senha do usuário
+    await prisma.users.update({
+      where: { id: resetToken.user_id },
+      data: { 
+        password: hashedPassword,
+        updated_at: new Date()
+      }
+    });
+
+    // 5. Marcar token como usado
+    await prisma.password_reset_tokens.update({
+      where: { id: resetToken.id },
+      data: { used: true }
+    });
+
+    console.log(`Senha resetada para usuário ID: ${resetToken.user_id}`);
+
+    return res.status(200).json({ 
+      message: "Senha alterada com sucesso!" 
+    });
+
+  } catch (error) {
+    console.error('Erro em resetPassword:', error);
+    return res.status(500).json({ error: "Erro no servidor" });
+  }
+});
+
+
+
+
+
+
 
 
 
